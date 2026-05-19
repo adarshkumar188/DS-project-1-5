@@ -1,0 +1,84 @@
+import numpy as np
+
+# Generate 50 random scores between 0 and 100
+scores = np.random.randint(0, 101, size=50)
+
+print("All Scores:\n")
+print(scores)
+
+# Basic Statistics
+mean_score = np.mean(scores)
+median_score = np.median(scores)
+highest_score = np.max(scores)
+lowest_score = np.min(scores)
+std_dev = np.std(scores)
+
+print("\n----- Statistics -----")
+print("Mean Score:", mean_score)
+print("Median Score:", median_score)
+print("Highest Score:", highest_score)
+print("Lowest Score:", lowest_score)
+print("Standard Deviation:", std_dev)
+
+# Percentiles
+print("\n25th Percentile:", np.percentile(scores, 25))
+print("50th Percentile:", np.percentile(scores, 50))
+print("90th Percentile:", np.percentile(scores, 90))
+
+# Students below 40
+fail_students = scores[scores < 40]
+
+print("\n----- Failed Students (<40) -----")
+print(fail_students)
+
+# Students above 85
+distinction_students = scores[scores > 85]
+
+print("\n----- Distinction Students (>85) -----")
+print(distinction_students)
+
+# Normalize scores between 0 and 1
+normalized_scores = scores / 100
+
+print("\n----- Normalized Scores -----")
+print(normalized_scores)
+
+# Reshape into 5 rows × 10 columns
+reshaped_scores = scores.reshape(5, 10)
+
+print("\n----- Reshaped Scores (5x10) -----")
+print(reshaped_scores)
+
+# Row-wise averages
+row_averages = np.mean(reshaped_scores, axis=1)
+
+print("\n----- Row-wise Averages -----")
+print(row_averages)
+
+# Broadcasting Example
+bonus_marks = 5
+updated_scores = scores + bonus_marks
+
+# Keep max score at 100
+updated_scores = np.clip(updated_scores, 0, 100)
+
+print("\n----- Scores After Bonus -----")
+print(updated_scores)
+
+# Bonus Challenge
+# Theory = 40%
+# Practical = 60%
+
+theory_scores = np.random.randint(0, 101, size=50)
+practical_scores = np.random.randint(0, 101, size=50)
+
+weighted_final_scores = (0.4 * theory_scores) + (0.6 * practical_scores)
+
+print("\n----- Theory Scores -----")
+print(theory_scores)
+
+print("\n----- Practical Scores -----")
+print(practical_scores)
+
+print("\n----- Weighted Final Scores -----")
+print(weighted_final_scores)
