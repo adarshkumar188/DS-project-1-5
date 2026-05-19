@@ -1,0 +1,113 @@
+import pandas as pd
+
+# Load dataset
+df = pd.read_csv("SampleSuperstore.csv", encoding='latin1')
+
+# Show first rows
+print("\n----- First 5 Rows -----")
+print(df.head())
+
+# Dataset information
+print("\n----- Dataset Info -----")
+print(df.info())
+
+# ==============================
+# Total Sales and Profit
+# by Region and Category
+# ==============================
+
+print("\n----- Total Sales and Profit by Region & Category -----")
+
+region_category = df.groupby(
+    ['Region', 'Category']
+)[['Sales', 'Profit']].sum()
+
+print(region_category)
+
+# ==============================
+# Top 3 Sub-Categories
+# in each Region
+# ==============================
+
+print("\n----- Top 3 Sub-Categories in Each Region -----")
+
+subcat_sales = df.groupby(
+    ['Region', 'Sub-Category']
+)['Sales'].sum().reset_index()
+
+top3 = subcat_sales.sort_values(
+    ['Region', 'Sales'],
+    ascending=[True, False]
+).groupby('Region').head(3)
+
+print(top3)
+
+# ==============================
+# Profit Margin %
+# ==============================
+
+df['Profit Margin %'] = (df['Profit'] / df['Sales']) * 100
+
+print("\n----- Profit Margin Added -----")
+
+print(df[['Sales', 'Profit', 'Profit Margin %']].head())
+
+# ==============================
+# Pivot Table
+# Average Sales by Region & Segment
+# ==============================
+
+print("\n----- Pivot Table -----")
+
+pivot = pd.pivot_table(
+    df,
+    values='Sales',
+    index='Region',
+    columns='Segment',
+    aggfunc='mean'
+)
+
+print(pivot)
+
+# ==============================
+# Months with Negative Profit
+# ==============================
+
+# Convert Order Date to datetime
+df['Order Date'] = pd.to_datetime(df['Order Date'])
+
+# Extract Month-Year
+df['Month'] = df['Order Date'].dt.to_period('M')
+
+monthly_profit = df.groupby('Month')['Profit'].sum()
+
+negative_profit = monthly_profit[monthly_profit < 0]
+
+print("\n----- Months with Negative Profit -----")
+
+print(negative_profit)
+
+# ==============================
+# agg() Example
+# ==============================
+
+print("\n----- Aggregation Example -----")
+
+agg_result = df.groupby('Region').agg({
+    'Sales': ['sum', 'mean', 'max'],
+    'Profit': ['sum', 'mean', 'min']
+})
+
+print(agg_result)
+
+# ==============================
+# apply() with lambda
+# ==============================
+
+print("\n----- Sales Category -----")
+
+df['Sales Category'] = df['Sales'].apply(
+    lambda x: 'High' if x > 500 else 'Low'
+)
+
+print(df[['Sales', 'Sales Category']].head())
