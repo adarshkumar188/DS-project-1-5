@@ -1,0 +1,332 @@
+import pandas as pd
+
+# =========================================
+# LOAD DATASETS
+# =========================================
+
+orders = pd.read_csv("olist_orders_dataset.csv")
+
+customers = pd.read_csv("olist_customers_dataset.csv")
+
+order_items = pd.read_csv("olist_order_items_dataset.csv")
+
+products = pd.read_csv("olist_products_dataset.csv")
+
+payments = pd.read_csv("olist_order_payments_dataset.csv")
+
+# =========================================
+# SHOW BASIC DATA
+# =========================================
+
+print("\n----- Orders -----")
+print(orders.head())
+
+print("\n----- Customers -----")
+print(customers.head())
+
+print("\n----- Order Items -----")
+print(order_items.head())
+
+print("\n----- Products -----")
+print(products.head())
+
+print("\n----- Payments -----")
+print(payments.head())
+
+# =========================================
+# MERGE ALL TABLES
+# =========================================
+
+# Orders + Customers
+master_df = pd.merge(
+    orders,
+    customers,
+    on="customer_id",
+    how="inner"
+)
+
+# Add Order Items
+master_df = pd.merge(
+    master_df,
+    order_items,
+    on="order_id",
+    how="inner"
+)
+
+# Add Products
+master_df = pd.merge(
+    master_df,
+    products,
+    on="product_id",
+    how="left"
+)
+
+# Add Payments
+master_df = pd.merge(
+    master_df,
+    payments,
+    on="order_id",
+    how="left"
+)
+
+# =========================================
+# MASTER DATAFRAME
+# =========================================
+
+print("\n----- Master DataFrame -----")
+print(master_df.head())
+
+print("\nShape of Master DataFrame:")
+print(master_df.shape)
+
+# =========================================
+# TOTAL REVENUE PER CUSTOMER
+# =========================================
+
+customer_revenue = (
+    master_df.groupby("customer_unique_id")["price"]
+    .sum()
+    .sort_values(ascending=False)
+)
+
+print("\n----- Total Revenue Per Customer -----")
+print(customer_revenue.head(10))
+
+# =========================================
+# CUSTOMERS WITH ONLY ONE ORDER
+# =========================================
+
+order_count = (
+    master_df.groupby("customer_unique_id")["order_id"]
+    .nunique()
+)
+
+single_order_customers = order_count[order_count == 1]
+
+print("\n----- Customers With Only One Order -----")
+print(single_order_customers.head(10))
+
+# =========================================
+# DATE OPERATIONS
+# =========================================
+
+master_df["order_purchase_timestamp"] = pd.to_datetime(
+    master_df["order_purchase_timestamp"]
+)
+
+# Extract year
+master_df["Year"] = (
+    master_df["order_purchase_timestamp"].dt.year
+)
+
+# Extract month
+master_df["Month"] = (
+    master_df["order_purchase_timestamp"].dt.month
+)
+
+print("\n----- Year and Month -----")
+print(
+    master_df[
+        [
+            "order_purchase_timestamp",
+            "Year",
+            "Month"
+        ]
+    ].head()
+)
+
+# =========================================
+# STRING OPERATIONS
+# =========================================
+
+master_df["customer_city_upper"] = (
+    master_df["customer_city"].str.upper()
+)
+
+print("\n----- Uppercase Cities -----")
+print(
+    master_df[
+        [
+            "customer_city",
+            "customer_city_upper"
+        ]
+    ].head()
+)
+
+# =========================================
+# MULTI-INDEX DATAFRAME
+# =========================================
+
+multi_index = (
+    master_df.groupby(
+        [
+            "customer_state",
+            "product_category_name"
+        ]
+    )["price"]
+    .sum()
+)
+
+print("\n----- Multi Index DataFrame -----")
+print(multi_index.head(10))
+
+# =========================================
+# PIVOT TABLE
+# =========================================
+
+pivot = pd.pivot_table(
+    master_df,
+    values="price",
+    index="customer_state",
+    columns="payment_type",
+    aggfunc="mean"
+)
+
+print("\n----- Pivot Table -----")
+print(pivot.head())
+
+# =========================================
+# CONCAT EXAMPLE
+# =========================================
+
+sample1 = master_df.head(5)
+
+sample2 = master_df.tail(5)
+
+concat_df = pd.concat([sample1, sample2])
+
+print("\n----- Concatenated Data -----")
+print(concat_df)
+
+# =========================================
+# MELT EXAMPLE
+# =========================================
+
+sales_data = pd.DataFrame({
+    "Product": ["Laptop", "Phone"],
+    "Jan": [1000, 800],
+    "Feb": [1200, 850],
+    "Mar": [1100, 900]
+})
+
+print("\n----- Original Wide Data -----")
+print(sales_data)
+
+melted = pd.melt(
+    sales_data,
+    id_vars=["Product"],
+    var_name="Month",
+    value_name="Sales"
+)
+
+print("\n----- Melted Long Data -----")
+print(melted)
+
+# =========================================
+# BONUS CHALLENGE
+# DELIVERY TIME ANALYSIS
+# =========================================
+
+master_df["order_delivered_customer_date"] = pd.to_datetime(
+    master_df["order_delivered_customer_date"]
+)
+
+master_df["delivery_days"] = (
+    master_df["order_delivered_customer_date"]
+    - master_df["order_purchase_timestamp"]
+).dt.days
+
+print("\n----- Average Delivery Time -----")
+
+print(master_df["delivery_days"].mean())
+
+# Slowest delivery cities
+slowest_cities = (
+    master_df.groupby("customer_city")["delivery_days"]
+    .mean()
+    .sort_values(ascending=False)
+)
+
+print("\n----- Slowest Delivery Cities -----")
+print(slowest_cities.head(10))
+
+# =========================================
+# MONTHLY SALES TREND
+# =========================================
+
+monthly_sales = (
+    master_df.groupby(
+        ["Year", "Month"]
+    )["price"]
+    .sum()
+)
+
+print("\n----- Monthly Sales Trend -----")
+print(monthly_sales)
+
+# =========================================
+# MOST EXPENSIVE PRODUCTS
+# =========================================
+
+print("\n----- Most Expensive Products -----")
+
+expensive_products = master_df.sort_values(
+    by="price",
+    ascending=False
+)
+
+print(
+    expensive_products[
+        [
+            "product_id",
+            "price",
+            "product_category_name"
+        ]
+    ].head(10)
+)
+
+# =========================================
+# TOP CITIES BY REVENUE
+# =========================================
+
+top_cities = (
+    master_df.groupby("customer_city")["price"]
+    .sum()
+    .sort_values(ascending=False)
+)
+
+print("\n----- Top Cities By Revenue -----")
+print(top_cities.head(10))
+
+# =========================================
+# ORDERS DELIVERED LATE
+# =========================================
+
+late_orders = master_df[
+    master_df["delivery_days"] > 30
+]
+
+print("\n----- Late Orders -----")
+print(
+    late_orders[
+        [
+            "order_id",
+            "customer_city",
+            "delivery_days"
+        ]
+    ].head(10)
+)
+
+# =========================================
+# ORDERS PER STATE
+# =========================================
+
+orders_per_state = (
+    master_df["customer_state"]
+    .value_counts()
+)
+
+print("\n----- Orders Per State -----")
+print(orders_per_state.head(10))
+
+print("\n===== PROGRAM COMPLETED SUCCESSFULLY =====")
